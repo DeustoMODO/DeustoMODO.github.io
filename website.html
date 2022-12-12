@@ -1,0 +1,92 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <link rel="stylesheet" href="styles.css" type="text/css">
+    </head>
+<body>
+
+<h1>Welcome to the Smart-plant tutorial</h1>
+
+In this part we will take a look at how to extract the Database values from Corlysis</br>
+For that we will take the following Webpage as a little help: <a href="https://corlysis.com/docs/tutorials/get-csv-data/">corlysis.com/docs/tutorials/get-csv-data/</a><br>
+<br>
+In order to receive data in the the first place we´ll have to know how to extract them inside of the Database. For that we have to know a little bit of SQL syntax<br>
+<br>
+<table>
+    <tr><td>select</td><td> <- allows us to specify the column</td><td> <- in our case the column: light</td></tr>
+    <tr><td>from</td><td> <- allows us to specify the column</td><td> <- in our case the table: light</td></tr>
+</table>
+<br>
+So our SQL query is: <bold>select light from light</bold><br>
+<br>
+Since we want to have the data sent to our raspberry pi, we have to use the request function in order to establish a connection.<br>
+As you can see on the Corlysis website, a code has already been made available. But we will have to adapt it a little.
+<br>
+<br>
+<query>
+$ curl -H "Accept: application/csv" -G 'https://corlysis.com:8086/query'  --data-urlencode "db=boiler" -u token:YOUR-SECRET-PASSWORD --data-urlencode "q=select * from rtemp where time >= now() - 100s"
+</query>
+<br><br>
+Try to copy this code into your terminal of the raspberrypi. Remember to change the following elements.
+<table>
+    <tr><td>"db=boiler"</td><td>"db=light"</td></tr>
+    <tr><td>token:YOUR-SECRET-PASSWORD </td><td>This is your token</td></tr>
+    <tr><td>"q=select * from rtemp where time >= now() - 100s"</td><td>"q=select light from light"</td></tr>
+</table><br>
+If you now put this adjusted code into your terminal you´ll see that it retrieves the data in a CSV format, meaning Comma Seperated Value.<br>
+However because we already know how to deal with Json format are we going to change that into a Json format.
+<br>
+We´ll also try to split the code a little bit up so it looks nicer and more comprehensible.<br><br>
+<p>1. Step</p>
+<img src="C:\Users\morit\OneDrive\Desktop\Smart_plant\bilder\import.png"><br>
+Add these commands to import those libraries.<br> 
+In Python, a library is a collection of modules that provides additional functionality to a Python program. <br>
+Libraries can be used to perform a wide range of tasks, such as working with data, handling HTTP requests, and creating graphical user interfaces.<br>
+<p>2. Step</p>
+<img src="C:\Users\morit\OneDrive\Desktop\Smart_plant\bilder\url_header.png"><br>
+As you can see can you assign the different parts of the codes to different values, like URL.<br>
+This variable now contains the URL as a string.<br>
+The same goes for the header. But now comes the part, where we tell the Database to send us the Data in Json format and not csv.<br>
+Go ahead and compare it to the Websites recommended code. As you can see does it say:<br>
+<query>"Accept: application/csv"</query><br>
+With altering the ending we managed to get the data in another format.<br>
+Even thought the "spelling" seems a bit off and unfimiliar, this is also just assigning a string to a variable.<br><br>
+<p>3. Step</p>
+<img src="C:\Users\morit\OneDrive\Desktop\Smart_plant\bilder\params.png"><br>
+Again assigning a piece of the code to a variable called params. Here you dont have to change that much.<br>
+<p>4. Step</p>
+<img src="C:\Users\morit\OneDrive\Desktop\Smart_plant\bilder\response.png"><br>
+This final step compined all the previously assembled variabled and adds some to it.<br>
+<query>request.get</query><br>
+ In Python, the request.get() method is used to send an HTTP GET request to a specified URL.<br>
+The request.get() method is part of the requests library, which is a popular library for making HTTP requests in Python.<br>
+with inserting the different values we fulill all needed values for this method.<br>
+Don´t forget to add the last variable <bold>"auth"</bold> which contains the password/token to your database.<br>
+<p>5. and final step</p>
+If you managed to put in the code correctly it should look like this. We´ll add the last part soon.<br>
+<img src="C:\Users\morit\OneDrive\Desktop\Smart_plant\bilder\all.png"><br>
+Now we just need to edit the data so we can work with it.<br>
+First use <query>json.loads</query> which takes a JSON string as its argument, and returns a Python object (such as a dictionary or a list) that corresponds to the JSON data.<br>
+The square brackets <query>[]</query> could now lead to some confussion.<br>
+As the <query>json.loads</query> method returns a python object we have treat it accordingly.<br>
+Take a look at how the Json variable looks like and you´ll se that we have to indicate what "columns" or objects we want to interact with.<br>
+<img src="C:\Users\morit\OneDrive\Desktop\Smart_plant\bilder\json.png"><br>
+In this example, the JSON file contains an object with a fruits property that is an array of fruit objects. Each fruit object has a name, color, and price property.<br>
+To interact with those object we have to get <query>var["fruits]</query>. That way python knows we want the corresponding data.<br>
+In our case we need to browse the object quite a bit. Take a look and maybe try simply <query>json.loads(responseJson.text)</query>and add every square bracket step by step.<br>
+<br>
+<query>light_values = []</query> simply creates an empty python object we´ll need it for the following code:<br>
+<query>for i in range(len(liste)):<br>
+    &emsp; light_values.append(liste[i][1])</query><br><br>
+In Python, the for loop is used to iterate over a sequence of elements (such as a list, a tuple, or a string) and execute a block of code for each element in the sequence.<br>
+The for loop repeats the code block for each element in the sequence, and allows you to perform a specific task for each element.<br>
+This way we are able to append the light values, again using the <query>square brackets []</query> .<br>
+In Python, the append() method is used to add an element to the end of a list. The append() method is a method of the list class, which means that it can only be used on lists. <br>
+It adds the element as the last element of the list, and increases the size of the list by one.<br><br>
+Now we have a list full of our light values, but not quite an average of them.<br><br>
+For that we have to get the sum and number of elements of them. Luckily can we take advantage of two methods:<br><br>
+<query>sum()</query>In Python, the sum() function is used to calculate the sum of the elements in an iterable.<br>
+<query>len()</query>In Python, the len() function is used to calculate the length of an object. And with that the N value<br><br>
+Put together we can print the result, which is then picked up by our main.py script where the mean is used for giving a broader view over the light value.
+</body>
+</html>
